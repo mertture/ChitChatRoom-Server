@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
@@ -43,6 +44,10 @@ func (server *Server) Initialize(DBurl string) {
 	server.DB = client.Database("ChitChatRoom")
 
 	server.Router = gin.Default()
+
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	server.Router.Use(cors.New(config))
 
 	server.initializeRoutes()
 }

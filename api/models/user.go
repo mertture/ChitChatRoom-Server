@@ -13,7 +13,7 @@ type User struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty"`
 	Email    string             `bson:"email,omitempty" validate:"required,email"`
 	Password string             `bson:"password,omitempty" validate:"required,min=6"`
-	Role     string             `bson:"role,omitempty" validate:"required,oneof=admin user"`
+	Role     uint32             `bson:"role,omitempty" validate:"required,oneof=1 2 3"`
 }
 
 func Hash(password string) ([]byte, error) {
@@ -34,7 +34,7 @@ func (u *User) BeforeSave() error {
 }
 
 func (u *User) Prepare() {
-	u.ID = primitive.NilObjectID
+	u.ID = primitive.NewObjectID();
 	u.Email = html.EscapeString(strings.TrimSpace(u.Email))
 }
 

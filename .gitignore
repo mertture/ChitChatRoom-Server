@@ -25,3 +25,7 @@
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+.air.toml
+build/
+tmp/
