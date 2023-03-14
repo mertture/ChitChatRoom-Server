@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"github.com/mertture/ChitChatRoom-Server/api/auth"
 	"github.com/mertture/ChitChatRoom-Server/api/responses"
+	"github.com/gin-gonic/gin"
 )
 
-func SetMiddlewareJSON(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		next(w, r)
+func SetMiddlewareJSON(next gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Content-Type", "application/json")
+		next(c)
 	}
 }
 

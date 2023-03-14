@@ -34,7 +34,7 @@ func (u *User) BeforeSave() error {
 }
 
 func (u *User) Prepare() {
-	u.ID = primitive.NilObjectID
+	u.ID = primitive.NewObjectID();
 	u.Email = html.EscapeString(strings.TrimSpace(u.Email))
 }
 
