@@ -8,10 +8,21 @@ require (
 )
 
 require (
+	github.com/cosmtrek/air v1.42.0 // indirect
+	github.com/creack/pty v1.1.18 // indirect
+	github.com/fatih/color v1.15.0 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/imdario/mergo v0.3.13 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/pelletier/go-toml v1.9.5 // indirect
+)
+
+require (
 	github.com/badoux/checkmail v1.2.1
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect

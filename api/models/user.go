@@ -13,7 +13,7 @@ type User struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty"`
 	Email    string             `bson:"email,omitempty" validate:"required,email"`
 	Password string             `bson:"password,omitempty" validate:"required,min=6"`
-	Role     string             `bson:"role,omitempty" validate:"required,oneof=admin user"`
+	Role     uint32             `bson:"role,omitempty" validate:"required,oneof=1 2 3"`
 }
 
 func Hash(password string) ([]byte, error) {
