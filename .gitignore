@@ -27,5 +27,5 @@
 Thumbs.db
 
 .air.toml
-/build
-/tmp
+build/
+tmp/
