@@ -7,8 +7,10 @@ import (
 func (s *Server) initializeRoutes() {
 
 	// Home Route
-	s.Router.GET("/", middlewares.SetMiddlewareJSON(s.Dashboard))
+	s.Router.GET("/api/dashboard", middlewares.SetMiddlewareJSON(s.Dashboard))
 
-	s.Router.POST("/register", middlewares.SetMiddlewareJSON(s.Register))
-	s.Router.POST("/login", middlewares.SetMiddlewareJSON(s.Login))
+	s.Router.POST("/api/user/register", middlewares.SetMiddlewareJSON(s.Register))
+	s.Router.POST("/api/user/login", middlewares.SetMiddlewareJSON(s.Login))
+
+	s.Router.GET("/api/user/me", middlewares.SetMiddlewareAuthentication(s.GetUserByToken))
 }

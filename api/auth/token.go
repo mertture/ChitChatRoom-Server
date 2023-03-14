@@ -11,9 +11,11 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func CreateToken(user_id string) (string, error) {
+func CreateToken(user_id primitive.ObjectID) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_id"] = user_id
@@ -22,57 +24,64 @@ func CreateToken(user_id string) (string, error) {
 	return token.SignedString([]byte(os.Getenv("JWT_API_SECRET")))
 }
 
-func TokenValid(r *http.Request) error {
-	tokenString := ExtractToken(r)
+func TokenValid(c *gin.Context) {
+
+	tokenString := ExtractToken(c)
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
+
 		return []byte(os.Getenv("JWT_API_SECRET")), nil
 	})
+
 	if err != nil {
-		return err
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return 
 	}
+
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		Pretty(claims)
+		c.Set("user", claims["user_id"]) // Set the user information in the context
+		return 
 	}
-	return nil
+	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 }
 
-func ExtractToken(r *http.Request) string {
-	keys := r.URL.Query()
-	token := keys.Get("token")
-	if token != "" {
-		return token
-	}
-	bearerToken := r.Header.Get("Authorization")
-	if len(strings.Split(bearerToken, " ")) == 2 {
-		return strings.Split(bearerToken, " ")[1]
-	}
-	return ""
+func ExtractToken(c *gin.Context) string {
+	
+    token := c.Query("token")
+    if token != "" {
+        return token
+    }
+    bearerToken := c.GetHeader("Authorization")
+    if len(strings.Split(bearerToken, " ")) == 2 {
+        return strings.Split(bearerToken, " ")[1]
+    }
+    return ""
 }
 
-func ExtractTokenID(r *http.Request) (uint64, error) {
-
-	tokenString := ExtractToken(r)
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(os.Getenv("JWT_API_SECRET")), nil
-	})
-	if err != nil {
-		return 0, err
-	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		uid, err := strconv.ParseUint(fmt.Sprintf("%.0f", claims["user_id"]), 10, 32)
-		if err != nil {
-			return 0, err
-		}
-		return uint64(uid), nil
-	}
-	return 0, nil
+func ExtractTokenID(c *gin.Context) (uint64, error) {
+    tokenString := ExtractToken(c)
+    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+        }
+        return []byte(os.Getenv("JWT_API_SECRET")), nil
+    })
+    if err != nil {
+        return 0, err
+    }
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if ok && token.Valid {
+        uid, err := strconv.ParseUint(fmt.Sprintf("%.0f", claims["user_id"]), 10, 32)
+        if err != nil {
+            return 0, err
+        }
+        return uint64(uid), nil
+    }
+    return 0, nil
 }
 
 

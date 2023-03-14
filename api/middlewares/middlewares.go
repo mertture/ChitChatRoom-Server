@@ -1,12 +1,8 @@
-
 package middlewares
 
 import (
-	"errors"
-	"net/http"
-	"github.com/mertture/ChitChatRoom-Server/api/auth"
-	"github.com/mertture/ChitChatRoom-Server/api/responses"
 	"github.com/gin-gonic/gin"
+	"github.com/mertture/ChitChatRoom-Server/api/auth"
 )
 
 func SetMiddlewareJSON(next gin.HandlerFunc) gin.HandlerFunc {
@@ -16,13 +12,9 @@ func SetMiddlewareJSON(next gin.HandlerFunc) gin.HandlerFunc {
 	}
 }
 
-func SetMiddlewareAuthentication(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		err := auth.TokenValid(r)
-		if err != nil {
-			responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
-			return
-		}
-		next(w, r)
-	}
+func SetMiddlewareAuthentication(next gin.HandlerFunc) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        auth.TokenValid(c) // call TokenValid with the context parameter
+        next(c)
+    }
 }
