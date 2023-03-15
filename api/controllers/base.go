@@ -46,7 +46,9 @@ func (server *Server) Initialize(DBurl string) {
 	server.Router = gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowAllOrigins = true
+	config.AddAllowHeaders("Authorization")
+
 	server.Router.Use(cors.New(config))
 
 	server.initializeRoutes()
