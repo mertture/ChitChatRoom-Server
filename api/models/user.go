@@ -10,10 +10,10 @@ import (
 )
 
 type User struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty"`
-	Email    string             `bson:"email,omitempty" validate:"required,email"`
-	Password string             `bson:"password,omitempty" validate:"required,min=6"`
-	Role     uint32             `bson:"role,omitempty" validate:"required,oneof=1 2 3"`
+	ID       primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Email    string             `json:"email" bson:"email,omitempty" validate:"required,email"`
+	Password string             `json:"password" bson:"password,omitempty" validate:"required,min=6"`
+	Role     uint32             `json:"role" bson:"role,omitempty" validate:"required,oneof=1 2 3"`
 }
 
 func Hash(password string) ([]byte, error) {
