@@ -19,12 +19,12 @@ func CreateToken(user_id primitive.ObjectID) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_id"] = user_id
-	claims["exp"] = time.Now().Add(time.Hour * 1).Unix() //Token expires after 1 hour
+	claims["exp"] = time.Now().Add(time.Hour * 24 * 7).Unix() //Token expires after 1 week
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_API_SECRET")))
 }
 
-func TokenValid(c *gin.Context) {
+func TokenValid(c *gin.Context) (error){
 
 	tokenString := ExtractToken(c)
 
@@ -38,15 +38,16 @@ func TokenValid(c *gin.Context) {
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return 
+		return err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		Pretty(claims)
 		c.Set("user", claims["user_id"]) // Set the user information in the context
-		return 
+		return err
 	}
 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+	return nil
 }
 
 func ExtractToken(c *gin.Context) string {

@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/mertture/ChitChatRoom-Server/api/auth"
 )
@@ -14,7 +15,12 @@ func SetMiddlewareJSON(next gin.HandlerFunc) gin.HandlerFunc {
 
 func SetMiddlewareAuthentication(next gin.HandlerFunc) gin.HandlerFunc {
     return func(c *gin.Context) {
-        auth.TokenValid(c) // call TokenValid with the context parameter
+		err := auth.TokenValid(c) // call TokenValid with the context parameter
+        if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+
+            return
+        }
         next(c)
     }
 }
