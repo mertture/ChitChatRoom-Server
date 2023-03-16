@@ -24,6 +24,7 @@ func (r *Room) BeforeSave() error {
 
 func (r *Room) Prepare() {
 	r.ID = primitive.NewObjectID();
+	r.Participants = []string{}
 }
 
 func (r *Room) Validate(action string) error {

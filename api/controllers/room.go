@@ -9,6 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mertture/ChitChatRoom-Server/api/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (server *Server) CreateRoom(c *gin.Context) {
@@ -57,22 +60,80 @@ func (server *Server) GetRoomByID(c *gin.Context) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
+	roomID, err := primitive.ObjectIDFromHex(c.Param("roomid"));
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Unable to convert roomID to ObjectId"})
+		return
+   }
+
 	room := models.Room{}
 
-	if err := c.BindJSON(&room); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	roomID := room.ID;
-
-    err := server.DB.Collection("Room").FindOne(ctx, bson.M{"_id": roomID}).Decode(&room)
+    err = server.DB.Collection("Room").FindOne(ctx, bson.M{"_id": roomID}).Decode(&room)
     if err != nil {
          c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
          return
     }
 
     c.JSON(http.StatusOK, room)
+}
+
+func (server *Server) EnterRoomByPassword(c *gin.Context) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
+
+	roomRequestBody := models.Room{}
+
+	if err := c.BindJSON(&roomRequestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	roomID, err := primitive.ObjectIDFromHex(c.Param("roomid"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Cannot convert roomID to objectId"})
+		return
+	}
+	room := models.Room{}
+
+    err = server.DB.Collection("Room").FindOne(ctx, bson.M{"_id": roomID}).Decode(&room)
+    if err != nil {
+         c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
+         return
+    }
+
+	err = models.VerifyPassword(room.Password, roomRequestBody.Password)
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Room password is wrong"})
+		return 
+	}
+
+	stringID := c.MustGet("user").(string)
+	fmt.Println("aa:", stringID)
+	userID, err := primitive.ObjectIDFromHex(stringID)
+
+	// Define the update operation
+	update := bson.M{
+		"$push": bson.M{
+			"participants": userID,
+		},
+	}
+
+	// Execute the update operation
+	roomResult, err := server.DB.Collection("Room").UpdateOne(ctx, bson.M{"_id": roomID}, update)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Room"})
+		return
+	}
+
+	if roomResult.ModifiedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
+		return
+	}
+
+	fmt.Println(roomResult);	
+
+	// Room updated successfully
+	c.JSON(http.StatusOK, gin.H{"message": "Entered to the room successfully"})
 }
 
 func (server *Server) ListRooms(c *gin.Context) {
