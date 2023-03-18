@@ -8,9 +8,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mertture/ChitChatRoom-Server/api/models"
+	"github.com/mertture/ChitChatRoom-Server/api/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -108,29 +108,31 @@ func (server *Server) EnterRoomByPassword(c *gin.Context) {
 	}
 
 	stringID := c.MustGet("user").(string)
-	fmt.Println("aa:", stringID)
 	userID, err := primitive.ObjectIDFromHex(stringID)
 
+	
+	if (!utils.Contains(room.Participants, stringID)) {
 	// Define the update operation
-	update := bson.M{
-		"$push": bson.M{
-			"participants": userID,
-		},
-	}
+		update := bson.M{
+			"$push": bson.M{
+				"participants": userID,
+			},
+		}
 
-	// Execute the update operation
-	roomResult, err := server.DB.Collection("Room").UpdateOne(ctx, bson.M{"_id": roomID}, update)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Room"})
-		return
-	}
+		// Execute the update operation
+		roomResult, err := server.DB.Collection("Room").UpdateOne(ctx, bson.M{"_id": roomID}, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Room"})
+			return
+		}
 
-	if roomResult.ModifiedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
-		return
-	}
+		if roomResult.ModifiedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
+			return
+		}
 
-	fmt.Println(roomResult);	
+		fmt.Println(roomResult);
+	}	
 
 	// Room updated successfully
 	c.JSON(http.StatusOK, gin.H{"message": "Entered to the room successfully"})

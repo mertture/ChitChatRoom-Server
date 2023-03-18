@@ -88,11 +88,9 @@ func ExtractTokenID(c *gin.Context) (uint64, error) {
 
 //Pretty display the claims licely in the terminal
 func Pretty(data interface{}) {
-	b, err := json.MarshalIndent(data, "", " ")
+	_, err := json.MarshalIndent(data, "", " ")
 	if err != nil {
 		log.Println(err)
 		return
 	}
-
-	fmt.Println(string(b))
 }
