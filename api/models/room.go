@@ -24,6 +24,7 @@ func (r *Room) BeforeSave() error {
 
 func (r *Room) Prepare() {
 	r.ID = primitive.NewObjectID();
+	r.Participants = []string{}
 }
 
 func (r *Room) Validate(action string) error {
@@ -46,4 +47,15 @@ func (r *Room) Validate(action string) error {
 		}
 		return nil
 	}
+}
+
+
+type NewParticipantJoinedResponse struct {
+    Message     string `json:"message" bson:"message"`
+    Participant User `json:"participant" bson:"participant"`
+}
+
+type ParticipantLeftResponse struct {
+    Message     string `json:"message" bson:"message"`
+    Participant string `json:"participant" bson:"participant"`
 }

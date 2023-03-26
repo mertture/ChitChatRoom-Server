@@ -19,7 +19,12 @@ func (s *Server) initializeRoutes() {
 
 	s.Router.POST("/api/room/create", middlewares.SetMiddlewareAuthentication(s.CreateRoom))
 	s.Router.GET("/api/room/:roomid", middlewares.SetMiddlewareAuthentication(s.GetRoomByID))
+	s.Router.POST("/api/room/:roomid", middlewares.SetMiddlewareAuthentication(s.EnterRoomByPassword))
 	s.Router.GET("/api/rooms", middlewares.SetMiddlewareAuthentication(s.ListRooms))
+	s.Router.GET("/ws/room/:roomid", middlewares.SetMiddlewareJSON(s.websocketHandler))
+
+
+
 
 
 }

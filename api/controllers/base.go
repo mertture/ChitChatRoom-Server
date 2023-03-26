@@ -9,12 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
-	//"github.com/mertture/FoodFast/api/models"
+	"github.com/mertture/ChitChatRoom-Server/api/models"
 )
 
 type Server struct {
 	DB  *mongo.Database
 	Router  *gin.Engine
+	clients map[string][]models.Client
 }
 
 func (server *Server) Initialize(DBurl string) {
@@ -51,6 +52,9 @@ func (server *Server) Initialize(DBurl string) {
 
 	server.Router.Use(cors.New(config))
 
+	
+    server.clients = make(map[string][]models.Client)
+    
 	server.initializeRoutes()
 }
 
