@@ -14,6 +14,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type RoomWithParticipants struct {
+    ID        	   primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+    Name      	   string             `json:"name,omitempty" bson:"name,omitempty"`
+    Participants   []models.User      `json:"participants,omitempty" bson:"-"`
+}
+
 func (server *Server) CreateRoom(c *gin.Context) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
@@ -57,6 +63,7 @@ func (server *Server) CreateRoom(c *gin.Context) {
 }
 
 func (server *Server) GetRoomByID(c *gin.Context) {
+
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
@@ -65,6 +72,8 @@ func (server *Server) GetRoomByID(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Unable to convert roomID to ObjectId"})
 		return
    }
+	objectIDs := []primitive.ObjectID{}
+    users := []models.User{}
 
 	room := models.Room{}
 
@@ -74,7 +83,44 @@ func (server *Server) GetRoomByID(c *gin.Context) {
          return
     }
 
-    c.JSON(http.StatusOK, room)
+	for _, participantID := range room.Participants {
+        objectID, err := primitive.ObjectIDFromHex(participantID)
+        if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err})
+			return
+        }
+        objectIDs = append(objectIDs, objectID)
+    }
+
+	filter := bson.M{"_id": bson.M{"$in": objectIDs}}
+	participants, err := server.DB.Collection("User").Find(ctx, filter);
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err})
+		return
+    }
+    defer participants.Close(ctx)
+
+	for participants.Next(ctx) {
+        var user models.User
+        err := participants.Decode(&user)
+        if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Error while decoding participant users"})
+			return
+        }
+        users = append(users, user)
+    }
+
+    if err := participants.Err(); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err})
+		return
+    }
+
+	roomWithParticipants := RoomWithParticipants{
+		ID: room.ID,
+		Name: room.Name,
+		Participants: users,
+	}
+    c.JSON(http.StatusOK, roomWithParticipants)
 }
 
 func (server *Server) EnterRoomByPassword(c *gin.Context) {

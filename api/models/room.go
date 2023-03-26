@@ -48,3 +48,14 @@ func (r *Room) Validate(action string) error {
 		return nil
 	}
 }
+
+
+type NewParticipantJoinedResponse struct {
+    Message     string `json:"message" bson:"message"`
+    Participant User `json:"participant" bson:"participant"`
+}
+
+type ParticipantLeftResponse struct {
+    Message     string `json:"message" bson:"message"`
+    Participant string `json:"participant" bson:"participant"`
+}
