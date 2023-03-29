@@ -177,7 +177,6 @@ func (server *Server) EnterRoomByPassword(c *gin.Context) {
 			return
 		}
 
-		fmt.Println(roomResult);
 	}	
 
 	// Room updated successfully

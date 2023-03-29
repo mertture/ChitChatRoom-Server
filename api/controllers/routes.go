@@ -21,7 +21,7 @@ func (s *Server) initializeRoutes() {
 	s.Router.GET("/api/room/:roomid", middlewares.SetMiddlewareAuthentication(s.GetRoomByID))
 	s.Router.POST("/api/room/:roomid", middlewares.SetMiddlewareAuthentication(s.EnterRoomByPassword))
 	s.Router.GET("/api/rooms", middlewares.SetMiddlewareAuthentication(s.ListRooms))
-	s.Router.GET("/ws/room/:roomid", middlewares.SetMiddlewareJSON(s.websocketHandler))
+	s.Router.GET("/", middlewares.SetMiddlewareJSON(s.websocketHandler))
 
 
 

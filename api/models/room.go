@@ -59,3 +59,8 @@ type ParticipantLeftResponse struct {
     Message     string `json:"message" bson:"message"`
     Participant string `json:"participant" bson:"participant"`
 }
+
+type UsersResponse struct {
+	Action			string	`json:"action" bson:"action"`
+	Participants	[]User 	`json:"participants" bson:"participants"`
+}

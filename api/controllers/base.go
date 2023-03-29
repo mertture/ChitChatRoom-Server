@@ -5,17 +5,21 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/gorilla/websocket"
 	"github.com/mertture/ChitChatRoom-Server/api/models"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Server struct {
 	DB  *mongo.Database
 	Router  *gin.Engine
-	clients map[string][]models.Client
+	clients map[string]map[*websocket.Conn]models.User
+	mutex sync.Mutex
 }
 
 func (server *Server) Initialize(DBurl string) {
@@ -53,7 +57,7 @@ func (server *Server) Initialize(DBurl string) {
 	server.Router.Use(cors.New(config))
 
 	
-    server.clients = make(map[string][]models.Client)
+    server.clients = make(map[string]map[*websocket.Conn]models.User)
     
 	server.initializeRoutes()
 }
