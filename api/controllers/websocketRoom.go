@@ -13,11 +13,19 @@ import (
     "github.com/mertture/ChitChatRoom-Server/api/models"
 )
 
-type message struct {
-    Participant string `json:"participant" bson:"participant"`
-    Room        string `json:"room" bson:"room"`
-    Action      string `json:"action" bson:"action"`
-};
+type Message struct {
+    Action       string `json:"action"`
+    Room         string `json:"room"`
+    Participant  string `json:"participant"`
+    Data        interface{} `json:"data"`
+}
+
+type ChatMessage struct {
+    Email        string `json:"email"`
+    Content      string `json:"content"`
+    CreatedAt    float64 `json:"createdAt"`
+}
+
 
 
 var upgrader = websocket.Upgrader{
@@ -65,6 +73,9 @@ func (server *Server) getParticipantsArray(Room string) []models.User{
 
 
 func (server *Server) websocketHandler(c *gin.Context) {
+    var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+    defer cancel()
+
     conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
     if err != nil {
 		fmt.Println("conn err:", err)
@@ -73,7 +84,7 @@ func (server *Server) websocketHandler(c *gin.Context) {
     }
     defer conn.Close()
 
-    var message message
+    var message Message
     // handle incoming and outgoing WebSocket messages
     // using the conn object
     for {
@@ -156,6 +167,92 @@ func (server *Server) websocketHandler(c *gin.Context) {
             response := models.UsersResponse{
                 Action: "users",
                 Participants: participants,
+            }
+
+            for c := range server.clients[Room] {
+                if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+                    fmt.Println("websocket connection closed")
+                    break
+                }
+                if err := c.WriteJSON(response); err != nil {
+                    fmt.Println("err on sending to clients: ", err);
+                    //break
+                }
+            }
+        case "chat":
+            // get the participant object from the user collection
+            userObjectID, err := primitive.ObjectIDFromHex(message.Participant)
+            if err != nil {
+                fmt.Println(err)
+                c.JSON(http.StatusNotFound, gin.H{"error": "Unable to convert userID to ObjectId"})
+                return
+            }
+
+            var chatMessage ChatMessage
+            if data, ok := message.Data.(map[string]interface{}); ok {
+                // Use type assertion to convert the data to ChatMessage struct
+                chatMessage = ChatMessage{
+                    Email: data["email"].(string),
+                    Content: data["content"].(string),
+                    CreatedAt: data["createdAt"].(float64),
+                }
+            } else {
+                // Handle error when type assertion fails
+                fmt.Printf("Failed to convert message data to ChatMessage: %+v", message.Data)
+                break;
+            }
+            fmt.Println("chat:", chatMessage)    
+        
+            //participants := server.getParticipantsArray(Room)
+            // create a new message to add to the room
+            sender := models.Sender {
+                ID: userObjectID,
+                Email: chatMessage.Email,
+            }
+
+            newMessage := models.Message{
+                Sender: sender,
+                Content: chatMessage.Content,
+                CreatedAt: chatMessage.CreatedAt,
+            }           
+            newMessage.Prepare()
+            
+            
+            roomObjectId, err := primitive.ObjectIDFromHex(Room)
+            if err != nil {
+                fmt.Println("err on room object id", err)
+            }
+            // filter to find the room with the given id
+            filter := bson.M{"_id": roomObjectId}
+
+            // update to add the new message to the messages array
+            update := bson.M{
+                "$push": bson.M{
+                    "messages": newMessage,
+                },
+            }
+
+            // update the room document in the database
+            _, err = server.DB.Collection("Room").UpdateOne(ctx, filter, update)
+            if err != nil {
+                fmt.Println("err on update", err)
+                break;
+            }
+
+            // find the updated room document
+            var room models.Room
+            err = server.DB.Collection("Room").FindOne(ctx, filter).Decode(&room)
+            if err != nil {
+                fmt.Println("err on getting room", err)
+                break
+            }
+
+            // extract the messages field from the room document
+            messages := room.Messages
+
+            response := models.MessagesResponse{
+                Action: "message",
+                Messages: messages,
             }
 
             for c := range server.clients[Room] {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mertture/ChitChatRoom-Server/api/models"
-	"github.com/mertture/ChitChatRoom-Server/api/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -83,14 +82,14 @@ func (server *Server) GetRoomByID(c *gin.Context) {
          return
     }
 
-	for _, participantID := range room.Participants {
-        objectID, err := primitive.ObjectIDFromHex(participantID)
-        if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": err})
-			return
-        }
-        objectIDs = append(objectIDs, objectID)
-    }
+	// for _, participantID := range room.Participants {
+    //     objectID, err := primitive.ObjectIDFromHex(participantID)
+    //     if err != nil {
+	// 		c.JSON(http.StatusNotFound, gin.H{"error": err})
+	// 		return
+    //     }
+    //     objectIDs = append(objectIDs, objectID)
+    // }
 
 	filter := bson.M{"_id": bson.M{"$in": objectIDs}}
 	participants, err := server.DB.Collection("User").Find(ctx, filter);
@@ -153,31 +152,31 @@ func (server *Server) EnterRoomByPassword(c *gin.Context) {
 		return 
 	}
 
-	stringID := c.MustGet("user").(string)
-	userID, err := primitive.ObjectIDFromHex(stringID)
+	//stringID := c.MustGet("user").(string)
+	//userID, err := primitive.ObjectIDFromHex(stringID)
 
 	
-	if (!utils.Contains(room.Participants, stringID)) {
-	// Define the update operation
-		update := bson.M{
-			"$push": bson.M{
-				"participants": userID,
-			},
-		}
+	// if (!utils.Contains(room.Participants, stringID)) {
+	// // Define the update operation
+	// 	update := bson.M{
+	// 		"$push": bson.M{
+	// 			"participants": userID,
+	// 		},
+	// 	}
 
-		// Execute the update operation
-		roomResult, err := server.DB.Collection("Room").UpdateOne(ctx, bson.M{"_id": roomID}, update)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Room"})
-			return
-		}
+	// 	// Execute the update operation
+	// 	roomResult, err := server.DB.Collection("Room").UpdateOne(ctx, bson.M{"_id": roomID}, update)
+	// 	if err != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Room"})
+	// 		return
+	// 	}
 
-		if roomResult.ModifiedCount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
-			return
-		}
+	// 	if roomResult.ModifiedCount == 0 {
+	// 		c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
+	// 		return
+	// 	}
 
-	}	
+	// }	
 
 	// Room updated successfully
 	c.JSON(http.StatusOK, gin.H{"message": "Entered to the room successfully"})
