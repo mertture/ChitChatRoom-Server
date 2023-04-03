@@ -139,15 +139,43 @@ func (server *Server) websocketHandler(c *gin.Context) {
                 Action: "users",
                 Participants: participants,
             }
+
+            // find the updated room document
+            roomObjectId, err := primitive.ObjectIDFromHex(Room)
+            if err != nil {
+                fmt.Println("err on room object id", err)
+            }
+            // filter to find the room with the given id
+            filter = bson.M{"_id": roomObjectId}
+            var room models.Room
+            err = server.DB.Collection("Room").FindOne(ctx, filter).Decode(&room)
+            if err != nil {
+                fmt.Println("err on getting room", err)
+                break
+            }
+
+            // extract the messages field from the room document
+            messages := room.Messages
+
+            chatMessages := models.MessagesResponse{
+                Action: "message",
+                Messages: messages,
+            }
             
     
-            for c := range server.clients[Room] {
+            for c, k := range server.clients[Room] {
                 if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
                     fmt.Println("websocket connection closed")
                     break
                 }
                 if err := c.WriteJSON(response); err != nil {
                     fmt.Println("err on sending to clients: ", err);
+                }
+                if (k.ID == user.ID) {
+                    fmt.Println("sending my messages to clients:")
+                    if err := c.WriteJSON(chatMessages); err != nil {
+                        fmt.Println("err on sending my messages to clients: ", err);
+                    }
                 }
             }
         
